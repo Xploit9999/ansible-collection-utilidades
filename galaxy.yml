@@ -15,8 +15,9 @@ tags:
   - linux
   - development
 dependencies: {}
-repository: https://github.com/Xploit9999/Ansible_modulos/
-documentation: https://github.com/Xploit9999/Ansible_modulos/blob/devel/html_pdf/README.md
+repository: https://github.com/Xploit9999/ansible-collection-utilidades
+documentation: https://github.com/Xploit9999/ansible-collection-utilidades/blob/master/README.md
+issues: https://github.com/Xploit9999/ansible-collection-utilidades/issues
 build_ignore:
   - '*.tar.gz'
   - '*.log'
