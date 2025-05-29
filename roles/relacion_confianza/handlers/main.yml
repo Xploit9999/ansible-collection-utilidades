@@ -1,0 +1,7 @@
+---
+# handlers file for relacion_confianza
+- name: Eliminar directorio de almacenamiento de las llaves
+  file:
+    path: "{{ almacenar }}/{{ inventory_hostname }}"
+    state: absent
+...

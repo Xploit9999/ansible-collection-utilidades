@@ -1,0 +1,31 @@
+---
+namespace: Xploit9999
+name: utilidades
+version: 1.0.0
+readme: README.md
+authors:
+  - John <@Xploit9999>
+description: Colección personal sobre necesidades del día a día de automatización en mi trabajo.
+license:
+  - MIT 
+tags:
+  - excel
+  - graphics
+  - openssl
+  - linux
+  - development
+dependencies: {}
+repository: https://github.com/Xploit9999/Ansible_modulos/
+documentation: https://github.com/Xploit9999/Ansible_modulos/blob/devel/html_pdf/README.md
+build_ignore:
+  - '*.tar.gz'
+  - '*.log'
+  - __pycache__
+  - .cache
+  - .DS_Store
+  - .git
+  - .github
+  - .gitignore
+  - .python-version
+  - .pytest_cache
+...

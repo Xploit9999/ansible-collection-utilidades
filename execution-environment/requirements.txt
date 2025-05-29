@@ -1,0 +1,8 @@
+plotly
+kaleido
+numpy
+pandas
+pyppeteer
+jmespath
+requests
+openpyxl

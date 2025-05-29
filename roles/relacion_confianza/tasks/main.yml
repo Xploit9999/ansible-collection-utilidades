@@ -1,0 +1,74 @@
+---
+# tasks file for relacion_confianza
+- name: Relación de confianza | Elimina llaves en el master local SI se encuentran
+  block:
+  - name: Relación de confianza | Valida si hay llaves viejas en el master
+    find:
+      path: "{{ llaves_almacenadas }}"
+      file_type: directory
+    register: obsoleto
+
+  - name: Relación de confianza | Elimina llaves viejas en caso de encontrase
+    file:
+      path: '{{ item.path }}'
+      state: absent
+    loop: '{{ obsoleto.files }}'
+  delegate_to: localhost
+  run_once: true
+
+- name: Relación de confianza | Crea usuarios y recolecta llaves publicas (RHEL)
+  include_tasks: '{{ ansible_os_family }}.yml'
+  when: inventory_hostname in groups['origen']
+
+- name: Relación de confianza | Valida llaves recolectadas.
+  find:
+    paths: "{{ almacenar }}"
+    recurse: no
+    file_type: directory
+    excludes: "{{ inventory_hostname }}"
+  register: directorio
+  delegate_to: localhost
+
+- block:
+  - set_fact:
+      ruta: "{{ directorio.files | map(attribute='path') }}"
+
+  - set_fact:
+      ruta_precisa: "{{ item }}"
+    loop: "{{ ruta }}"
+    when: inventory_hostname[:-1] in item
+  
+  - name: Relación de confianza | Valida o crea el directorio .ssh en el home del usuario. (RedHat)
+    file:
+      path: /home/{{ item.usuario }}/.ssh
+      state: directory
+      mode: '0700'
+      owner: "{{ item.usuario }}"
+    loop: "{{ relacion_confianza }}"
+    when: ansible_os_family == 'RedHat'
+
+  - name: Relación de confianza | Crea relación de confianza
+    authorized_key:
+      user: "{{ item.usuario }}"
+      state: present
+      key: "{{ lookup ('file', '{{ ruta_precisa }}/{{ item.usuario }}-id_rsa.pub') }}"
+    loop: "{{ relacion_confianza }}"
+    notify: "Eliminar directorio de almacenamiento de las llaves"
+  when: inventory_hostname in groups['destino']
+    
+- meta: flush_handlers
+
+- name: Relación de confianza | valida si es cluster
+  set_fact:
+    es_cluster: true
+  when: item[:-1] + '1' in groups['origen'] and item[:-1] + '2' in groups['destino']
+  loop: "{{ groups['origen'] }}"
+
+- name: Relación de confianza | Incluye tarea para known_hosts (CLUSTER)
+  include_tasks: cluster.yml
+  when: es_cluster
+
+- name: Relación de confianza | Incluye tarea para known_hosts (STANDALONE / APP )
+  include_tasks: independiente.yml
+  when: not es_cluster
+...

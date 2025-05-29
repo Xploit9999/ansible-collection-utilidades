@@ -1,0 +1,12 @@
+---
+requires_ansible: '>=2.15.0'
+action_groups:
+  all:
+    - graficos
+    - leer_excel
+    - mod_excel
+    - html_pdf
+    - kill
+    - get_pids
+    - openssl_sig
+...

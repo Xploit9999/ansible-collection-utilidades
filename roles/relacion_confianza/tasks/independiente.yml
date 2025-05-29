@@ -1,0 +1,35 @@
+---
+- block:
+  - name: Relación de confianza | Inspecciona llave publica ( STANDALONE / APP )
+    slurp:
+      src: "{{ llave_predeterminada }}"
+    register: key
+    loop: "{{ groups['origen'] }}"
+    when: inventory_hostname in groups['origen']
+
+  - name: Relación de confianza | Modela llave publica ( STANDALONE / APP )
+    set_fact:
+      modelar_llave: "{{ modelar_llave + [item.item + ' ' + item.content | b64decode] }}"
+    loop: "{{ key.results }}"
+    vars:
+      modelar_llave: []
+    when: inventory_hostname in groups['origen']
+
+- block:
+  - name: Relación de confianza | Crea y setea permisos para el archivo global del known_hosts del servidor destino( STANDALONE / APP  )
+    file:
+      path: "{{ ssh_known_hosts }}"
+      state: touch
+      mode: '0644'
+      owner: root
+      group: root
+
+  - name: Relación de confianza | Agrega llave del servidor origen al archivo global del known_hosts del servidor destino ( STANDALONE / APP )
+    known_hosts:
+      name: "{{ item.split()[0] }}"
+      path: "{{ ssh_known_hosts }}"
+      key: "{{ item }}"
+      state: present
+    loop: "{{ hostvars[groups['origen'][0]]['modelar_llave'] }}"
+  when: inventory_hostname in groups['destino']
+...

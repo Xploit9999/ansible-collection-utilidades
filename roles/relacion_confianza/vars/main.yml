@@ -1,0 +1,11 @@
+---
+# vars file for relacion_confianza#
+almacenar: /ansible/keys/
+es_ldap: false
+es_cluster: false
+llave_predeterminada: /etc/ssh/ssh_host_ecdsa_key.pub
+ssh_known_hosts: /etc/ssh/ssh_known_hosts
+relacion_confianza:
+  - usuario: pruebas
+  - usuario: pruebas2
+...

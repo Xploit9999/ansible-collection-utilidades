@@ -1,0 +1,25 @@
+---
+version: 3
+
+images:
+  base_image:
+    name: quay.io/centos/centos:stream9 #opcional.
+
+dependencies:
+  galaxy: requirements.yml
+  python: requirements.txt
+  system: bindep.txt
+  ansible_core:
+    package_pip: ansible-core==2.15.0
+  ansible_runner:
+    package_pip: ansible-runner
+
+additional_build_steps:
+  prepend_final:
+    - RUN curl -Lo /tmp/chrome-linux.zip https://download-chromium.appspot.com/dl/Linux_x64?type=snapshots
+  append_final:
+    - RUN unzip /tmp/chrome-linux.zip -d /tmp 
+    - RUN ln -s /tmp/chrome-linux/chrome /usr/local/bin/chrome
+    - LABEL maintainer=Xploit9999
+    - LABEL version=1.0.0
+...

@@ -1,0 +1,22 @@
+---
+- getent:
+    database: passwd
+    split: ':'
+
+- name: Relación de confianza | Creación de usuarios con sus respectivas llaves
+  user:
+    name: "{{ item.usuario }}"
+    generate_ssh_key: true
+    ssh_key_file: "{{ getent_passwd[item.usuario].4 }}/.ssh/id_rsa"
+    ssh_key_comment: "{{ item }}@{{ inventory_hostname }}"
+  loop: "{{ relacion_confianza }}"
+  when: item.usuario in getent_passwd
+
+- name: Relación de confianza | Recolecta las llaves publicas en el servidor master
+  fecth:
+    src: "{{ getent_passwd[item.usuario].4 }}/.ssh/id_rsa.pub"
+    dest: "{{ almacenar }}/{{ inventory_hostname }}/{{ item.usuario }}-id_rsa.pub"
+    flat: true
+  loop: "{{ relacion_confianza }}"
+  when: item.usuario in getent_passwd
+...

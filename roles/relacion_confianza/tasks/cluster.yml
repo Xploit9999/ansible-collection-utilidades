@@ -1,0 +1,57 @@
+---
+- name: Relación de confianza | Crea grupo en memoria para los nodos 1 (CLUSTER)
+  add_host:
+    hostname: "{{ item }}"
+    ansible_host: "{{ hostvars[item].ansible_host }}"
+    groups: nodo1
+  loop: "{{ groups['origen'] }}"
+  when: item == item[:-1] + '1'
+
+- name: Relación de confianza | Crea grupo en memoria para los nodos 2 (CLUSTER)
+  add_host:
+    hostname: "{{ item }}"
+    ansible_host: "{{ hostvars[item].ansible_host }}"
+    groups: nodo2
+  loop: "{{ groups['origen'] }}"
+  when: item == item[:-1] + '2'
+
+- name: Relación de confianza | Inspecciona llave publica (CLUSTER)
+  slurp:
+    src: "{{ llave_predeterminada }}"
+  register: key
+  loop: "{{ groups['origen'] }}"
+  when: item == item[:-1] + '1' and item[:-1] + '1' == inventory_hostname
+
+- name: Relación de confianza | Modela llave publica para el nodo 1 (CLUSTER)
+  set_fact:
+    modelar_llave: "{{ modelar_llave + [item.item + ' ' + item.content | b64decode] }}"
+  when: item.item == inentory_hostname[:-1] + '1' and item.content is defined
+  loop: "{{ key.results }}"
+  vars:
+    modelar_llave: []
+
+- name: Relación de confianza | Crea y setea permisos para el archivo global del known_hosts (CLUSTER)
+  file:
+    path: "{{ ssh_known_hosts }}"
+    state: touch
+    mode: '0644'
+    owner: root
+    group: root
+
+- name: Relación de confianza | Agrega llave del nodo2 al archivo global de known_hosts del nodo1 (CLUSTER)
+  known_hosts:
+    name: "{{ item.split()[0][:-1] + '2' }}"
+    path: "{{ ssh_known_hosts }}"
+    key: "{{ item | regex_replace(item.split()[0], item.split()[0][:-1] + '2') }}"
+    state: present
+  when: modelar_llave is defined and item.split()[0] in groups['nodo1']
+
+- name: Relación de confianza | Agrega llave del nodo1 al archivo global de known_hosts del nodo2 (CLUSTER)
+  known_hosts:
+    name: "{{ item.split()[0] }}"
+    path: "{{ ssh_known_hosts }}"
+    key: "{{ item }}"
+    state: present
+  when: inventory_hostname in groups['nodo2']
+  loop: "{{ hostvars[inventory_hostname[:-1] + '1'].modelar_llave }}"
+...

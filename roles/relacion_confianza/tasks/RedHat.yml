@@ -1,0 +1,58 @@
+---
+- name: Relación de confianza RHEL | Valida si el/os usuario(s) son LDAP
+  set_fact:
+    es_ldap: true
+  when: "'miad.loc' in item.usuario"
+  loop: "{{ relacion_confianza }}"
+
+- name: Relación de confianza RHEL | Bloque si el/os usuario(s) es/on LDAP
+  block:
+### Como es usuario ldap, se crea su home de forma estatica y no dinamica.
+  - name: Relación de confianza RHEL | Valida o setea permiso sobre el directorio .ssh 
+    file:
+      path: /home/{{ item.usuario }}/.ssh
+      state: directory
+      owner: "{{ item.usuario }}"
+      mode: '0700'
+    loop: "{{ relacion_confianza }}"
+
+  - name: Relación de confianza RHEL | Genera llave rsa
+    openssh_keypair:
+      path: /home/{{ item.usuario }}/.ssh/id_rsa
+      size: 2048
+      owner: "{{ item.usuario }}"
+      comment: "{{ item.usuario }}@{{ inventory_hostname }}"
+    loop: "{{ relacion_confianza }}"
+
+  - name: Recolecta llave publica generada para enviarla al servidor controller
+    fetch:
+      src: /home/{{ item.usuario }}/.ssh/id_rsa.pub
+      dest: "{{ almacenar }}/{{ inventory_hostname }}/{{ item.usuario }}-id_rsa.pub"
+      flat: true
+    loop: "{{ relacion_confianza }}"
+  when: es_ldap
+
+- block:
+  
+  - getent:
+      database: passwd
+      split: ':'
+
+  - name: Relación de confianza | Creación de usuarios con sus respectivas llaves
+    user:
+      name: "{{ item.usuario }}"
+      generate_ssh_key: true
+      ssh_key_file: "{{ getent_passwd[item.usuario].4/.ssh/id_rsa }}"
+      ssh_key_comment: "{{ item.usuario }}@{{ inventory_hostname }}"
+    loop: "{{ relacion_confianza }}"
+    when: item.usuario in getent_passwd
+
+  - name: Relación de confianza | Recolecta las llaves públicas en el servidor master
+    fetch:
+      src: "{{ getent_passwd[item.usuario].4 }}/.ssh/id_rsa.pub"
+      dest: "{{ almacenar }}/{{ inventory_hostname }}/{{ item.usuario }}-id_rsa.pub"
+      flat: true
+    loop: "{{ relacion_confianza }}"
+
+  when: not es_ldap
+...
