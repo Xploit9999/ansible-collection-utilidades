@@ -1,0 +1,10 @@
+---
+- block:
+  - name: Google Drive | Tarea para eliminación de un solo archivo
+    include_tasks: eliminar_archivo.yml
+    when: archivo is string
+
+  - name: Google Drive | Tarea para eliminación del multiples archivos
+    include_tasks: eliminar_archivos.yml
+    when: archivo is not string and archivo is iterable
+  when: tipo == 'archivo'

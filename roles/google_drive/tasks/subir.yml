@@ -1,0 +1,9 @@
+---
+- name: Google Drive | Subida | Subir archivos en un directorio
+  include_tasks: subir_directorio.yml
+  when: es_directorio | bool
+
+- name: Google Drive | Subida | Subir archivos o lista de archivos
+  include_tasks: subir_archivos.yml
+  when: es_archivo | bool 
+...
